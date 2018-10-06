@@ -1,4 +1,4 @@
-a <u>Sm</u>ol <u>sh</u>ell
+a <i>Sm</i>ol <i>sh</i>ell
 ==========================
 
 `smsh` is a small shell based almost entirely on Bash syntax, built in Go and made for ultraportability and simplicity.
