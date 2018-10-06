@@ -31,22 +31,40 @@ func main() {
 	}
 }
 
-func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) error {
+func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) (halt error) {
+	// TODO : I think we're going to have to feed things piecewise if we want to produce reports in the same granularity as the args.
+	//  The parser is clever enough to split statements, and that's... kind of not exactly what want here.
 	cmdStrm := bytes.NewBufferString(strings.Join(args, "\n"))
-	runner, _ := interp.New(interp.StdIO(stdin, stdout, stderr))
-	parser := syntax.NewParser()
+	runner, _ := interp.New(
+		interp.StdIO(stdin, stdout, stderr),
+		interp.Params("-e"), // TODO this doesn't do anything?
+		interp.Params("-u"), // TODO check if this does either
+	)
 	fn := func(s *syntax.Stmt) bool {
+		fmt.Printf(":: %#v\n", s)
 		if err := runner.Run(ctx, s); err != nil {
+			nodeStr := "todo:restring-the-cmd" // TODO this is hard to string back up!  fmt.Sprintf("%#v", s.Cmd) isn't even close.  offsets might do it?  uff.
 			switch x := err.(type) {
 			case interp.ShellExitStatus:
-				os.Exit(int(x))
+				// TODO it's not clear to me why this and ExitStatus are distinct,
+				//  so for now I'm just boxing them both into the same thing.
+				halt = ErrChildExit{nodeStr, int(x), 0}
+				return false
 			case interp.ExitStatus:
+				// TODO it looks like interp.DefaultExec doesn't really handle signals
+				//  as completely as it could... we should consider some PRs to that.
+				halt = ErrChildExit{nodeStr, int(x), 0}
+				return false
 			default:
-				fmt.Fprintln(runner.Stderr, err)
-				os.Exit(1)
+				halt = ErrInternal{err}
+				return false
 			}
 		}
 		return true
 	}
-	return parser.Stmts(cmdStrm, fn)
+	parser := syntax.NewParser()
+	if err := parser.Stmts(cmdStrm, fn); err != nil {
+		return err
+	}
+	return
 }

@@ -16,12 +16,43 @@ func runMain(args ...string) (string, string, error) {
 	return stdout.String(), stderr.String(), err
 }
 
-func Test(t *testing.T) {
+func TestHappyEcho(t *testing.T) {
 	stdout, stderr, err := runMain("echo foo", "echo bar", "echo baz")
 	Wish(t, stdout, ShouldEqual, Dedent(`
 		foo
 		bar
 		baz
+	`))
+	Wish(t, stderr, ShouldEqual, "")
+	Wish(t, err, ShouldEqual, nil)
+}
+
+func TestHappyEcho2(t *testing.T) {
+	stdout, stderr, err := runMain("echo foo; echo bar", "echo baz")
+	Wish(t, stdout, ShouldEqual, Dedent(`
+		foo
+		bar
+		baz
+	`))
+	Wish(t, stderr, ShouldEqual, "")
+	Wish(t, err, ShouldEqual, nil)
+}
+
+func TestExitOnError(t *testing.T) {
+	stdout, stderr, err := runMain("echo foo", "thisshouldnotbeacommand", "echo baz")
+	Wish(t, stdout, ShouldEqual, Dedent(`
+		foo
+	`))
+	Wish(t, stderr, ShouldEqual, Dedent(`
+		"thisshouldnotbeacommand": executable file not found in $PATH
+	`))
+	Wish(t, err, ShouldEqual, ErrChildExit{"todo:restring-the-cmd", 127, 0})
+}
+
+func TestPipes(t *testing.T) {
+	stdout, stderr, err := runMain("echo foo | cat -")
+	Wish(t, stdout, ShouldEqual, Dedent(`
+		foo
 	`))
 	Wish(t, stderr, ShouldEqual, "")
 	Wish(t, err, ShouldEqual, nil)
