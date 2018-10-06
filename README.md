@@ -1,5 +1,5 @@
-a __Sm__ol __sh__ell
-====================
+a <b>Sm</b>ol <b>sh</b>ell
+==========================
 
 `smsh` is a small shell based almost entirely on Bash syntax, built in Go and made for ultraportability and simplicity.
 
