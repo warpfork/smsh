@@ -34,7 +34,8 @@ func main() {
 func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) (halt error) {
 	// TODO : I think we're going to have to feed things piecewise if we want to produce reports in the same granularity as the args.
 	//  The parser is clever enough to split statements, and that's... kind of not exactly what want here.
-	cmdStrm := bytes.NewBufferString(strings.Join(args, "\n"))
+	cmdAll := strings.Join(args, "\n")
+	cmdStrm := bytes.NewBufferString(cmdAll)
 	runner, _ := interp.New(
 		interp.StdIO(stdin, stdout, stderr),
 		interp.Module(execTool),
@@ -42,7 +43,7 @@ func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io
 		interp.Params("-u"), // TODO check if this does either
 	)
 	fn := func(s *syntax.Stmt) bool {
-		fmt.Printf(":: %#v\n", s)
+		fmt.Printf(":: %#v\n", cmdAll[s.Pos().Offset():s.End().Offset()])
 		if err := runner.Run(ctx, s); err != nil {
 			switch err.(type) {
 			case ErrInternal, ErrChildExit:
