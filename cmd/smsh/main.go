@@ -1,26 +1,39 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"mvdan.cc/sh/interp"
 	"mvdan.cc/sh/syntax"
 )
 
 func main() {
-	if err := zoom(); err != nil {
-		fmt.Fprintf(os.Stderr, "smsh: %s", err)
-		os.Exit(1)
+	ctx := context.Background()
+	if err := Main(ctx, os.Args, os.Stdin, os.Stdout, os.Stderr); err != nil {
+		switch e2 := err.(type) {
+		case ErrChildExit:
+			fmt.Fprintf(os.Stderr, "smsh: %s", err)
+			if e2.Signal != 0 {
+				os.Exit(128 + e2.Signal)
+			}
+			os.Exit(e2.Code)
+		case ErrInternal:
+			fmt.Fprintf(os.Stderr, "smsh: %s", err)
+			os.Exit(125)
+		default:
+			panic(err)
+		}
 	}
 }
 
-func zoom() error {
-	ctx := context.Background()
-	pr := &promptReader{os.Stdin, os.Stdout, true}
-	runner, _ := interp.New(interp.StdIO(os.Stdin, os.Stdout, os.Stderr))
+func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) error {
+	cmdStrm := bytes.NewBufferString(strings.Join(args, "\n"))
+	runner, _ := interp.New(interp.StdIO(stdin, stdout, stderr))
 	parser := syntax.NewParser()
 	fn := func(s *syntax.Stmt) bool {
 		if err := runner.Run(ctx, s); err != nil {
@@ -33,24 +46,7 @@ func zoom() error {
 				os.Exit(1)
 			}
 		}
-		pr.first = true
 		return true
 	}
-	return parser.Stmts(pr, fn)
-}
-
-type promptReader struct {
-	io.Reader
-	io.Writer
-	first bool
-}
-
-func (pr *promptReader) Read(p []byte) (int, error) {
-	if pr.first {
-		fmt.Fprintf(pr.Writer, "$ ")
-		pr.first = false
-	} else {
-		fmt.Fprintf(pr.Writer, "> ")
-	}
-	return pr.Reader.Read(p)
+	return parser.Stmts(cmdStrm, fn)
 }
