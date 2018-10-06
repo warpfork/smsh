@@ -37,28 +37,20 @@ func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io
 	cmdStrm := bytes.NewBufferString(strings.Join(args, "\n"))
 	runner, _ := interp.New(
 		interp.StdIO(stdin, stdout, stderr),
+		interp.Module(execTool),
 		interp.Params("-e"), // TODO this doesn't do anything?
 		interp.Params("-u"), // TODO check if this does either
 	)
 	fn := func(s *syntax.Stmt) bool {
 		fmt.Printf(":: %#v\n", s)
 		if err := runner.Run(ctx, s); err != nil {
-			nodeStr := "todo:restring-the-cmd" // TODO this is hard to string back up!  fmt.Sprintf("%#v", s.Cmd) isn't even close.  offsets might do it?  uff.
-			switch x := err.(type) {
-			case interp.ShellExitStatus:
-				// TODO it's not clear to me why this and ExitStatus are distinct,
-				//  so for now I'm just boxing them both into the same thing.
-				halt = ErrChildExit{nodeStr, int(x), 0}
-				return false
-			case interp.ExitStatus:
-				// TODO it looks like interp.DefaultExec doesn't really handle signals
-				//  as completely as it could... we should consider some PRs to that.
-				halt = ErrChildExit{nodeStr, int(x), 0}
-				return false
+			switch err.(type) {
+			case ErrInternal, ErrChildExit:
+				halt = err
 			default:
 				halt = ErrInternal{err}
-				return false
 			}
+			return false
 		}
 		return true
 	}

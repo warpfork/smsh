@@ -46,7 +46,7 @@ func TestExitOnError(t *testing.T) {
 	Wish(t, stderr, ShouldEqual, Dedent(`
 		"thisshouldnotbeacommand": executable file not found in $PATH
 	`))
-	Wish(t, err, ShouldEqual, ErrChildExit{"todo:restring-the-cmd", 127, 0})
+	Wish(t, err, ShouldEqual, ErrChildExit{"thisshouldnotbeacommand", 127, 0})
 }
 
 func TestPipes(t *testing.T) {
