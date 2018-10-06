@@ -13,3 +13,6 @@
 [submodule ".gopath/src/golang.org/x/crypto"]
 	path = .gopath/src/golang.org/x/crypto
 	url = https://go.googlesource.com/crypto
+[submodule ".gopath/src/github.com/warpfork/go-wish"]
+	path = .gopath/src/github.com/warpfork/go-wish
+	url = https://github.com/warpfork/go-wish
