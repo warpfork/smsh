@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -32,32 +31,30 @@ func main() {
 }
 
 func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) (halt error) {
-	// TODO : I think we're going to have to feed things piecewise if we want to produce reports in the same granularity as the args.
-	//  The parser is clever enough to split statements, and that's... kind of not exactly what want here.
-	cmdAll := strings.Join(args, "\n")
-	cmdStrm := bytes.NewBufferString(cmdAll)
 	runner, _ := interp.New(
 		interp.StdIO(stdin, stdout, stderr),
 		interp.Module(execTool),
 		interp.Params("-e"), // TODO this doesn't do anything?
 		interp.Params("-u"), // TODO check if this does either
 	)
-	fn := func(s *syntax.Stmt) bool {
-		//fmt.Printf(":: %#v\n", cmdAll[s.Pos().Offset():s.End().Offset()])
-		if err := runner.Run(ctx, s); err != nil {
-			switch err.(type) {
-			case ErrInternal, ErrChildExit:
-				halt = err
-			default:
-				halt = ErrInternal{err}
-			}
-			return false
-		}
-		return true
-	}
+
 	parser := syntax.NewParser()
-	if err := parser.Stmts(cmdStrm, fn); err != nil {
-		return err
+	for _, arg := range args {
+		file, err := parser.Parse(strings.NewReader(arg), "")
+		if err != nil {
+			return err
+		}
+		for _, stmt := range file.Stmts {
+			//fmt.Printf(":: %#v\n", stmt)
+			if err := runner.Run(ctx, stmt); err != nil {
+				switch err.(type) {
+				case ErrInternal, ErrChildExit:
+					return err
+				default:
+					return ErrInternal{err}
+				}
+			}
+		}
 	}
-	return
+	return nil
 }
