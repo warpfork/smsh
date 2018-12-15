@@ -57,3 +57,21 @@ func TestPipes(t *testing.T) {
 	Wish(t, stderr, ShouldEqual, "")
 	Wish(t, err, ShouldEqual, nil)
 }
+
+func TestComments(t *testing.T) {
+	t.Run("single end of line comment", func(t *testing.T) {
+		stdout, stderr, err := runMain("echo foo | cat - # cmnt")
+		Wish(t, stdout, ShouldEqual, "foo\n")
+		Wish(t, stderr, ShouldEqual, "")
+		Wish(t, err, ShouldEqual, nil)
+	})
+}
+
+func TestFuncsAndSubshells(t *testing.T) {
+	t.Run("single end of line comment", func(t *testing.T) {
+		stdout, stderr, err := runMain(`(function foo { :; echo fa; }; foo)`)
+		Wish(t, stdout, ShouldEqual, "fa\n")
+		Wish(t, stderr, ShouldEqual, "")
+		Wish(t, err, ShouldEqual, nil)
+	})
+}

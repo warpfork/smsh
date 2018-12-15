@@ -43,7 +43,7 @@ func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io
 		interp.Params("-u"), // TODO check if this does either
 	)
 	fn := func(s *syntax.Stmt) bool {
-		fmt.Printf(":: %#v\n", cmdAll[s.Pos().Offset():s.End().Offset()])
+		//fmt.Printf(":: %#v\n", cmdAll[s.Pos().Offset():s.End().Offset()])
 		if err := runner.Run(ctx, s); err != nil {
 			switch err.(type) {
 			case ErrInternal, ErrChildExit:
