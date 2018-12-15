@@ -12,7 +12,7 @@ func runMain(args ...string) (string, string, error) {
 	stdin := &bytes.Buffer{}
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
-	err := Main(context.Background(), args, stdin, stdout, stderr)
+	err := Run(context.Background(), args, stdin, stdout, stderr)
 	return stdout.String(), stderr.String(), err
 }
 

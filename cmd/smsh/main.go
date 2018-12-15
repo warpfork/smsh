@@ -31,28 +31,39 @@ func main() {
 }
 
 func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) (halt error) {
+	return Run(ctx, args[1:], stdin, stdout, stderr)
+}
+
+func Run(ctx context.Context, cmdStrs []string, stdin io.Reader, stdout, stderr io.Writer) (halt error) {
+	parser := syntax.NewParser()
+	for _, cmdStr := range cmdStrs {
+		file, err := parser.Parse(strings.NewReader(cmdStr), "")
+		if err != nil {
+			return err
+		}
+		err = RunOne(ctx, file, stdin, stdout, stderr)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func RunOne(ctx context.Context, cmd *syntax.File, stdin io.Reader, stdout, stderr io.Writer) (halt error) {
 	runner, _ := interp.New(
 		interp.StdIO(stdin, stdout, stderr),
 		interp.Module(execTool),
 		interp.Params("-e"), // TODO this doesn't do anything?
 		interp.Params("-u"), // TODO check if this does either
 	)
-
-	parser := syntax.NewParser()
-	for _, arg := range args {
-		file, err := parser.Parse(strings.NewReader(arg), "")
-		if err != nil {
-			return err
-		}
-		for _, stmt := range file.Stmts {
-			//fmt.Printf(":: %#v\n", stmt)
-			if err := runner.Run(ctx, stmt); err != nil {
-				switch err.(type) {
-				case ErrInternal, ErrChildExit:
-					return err
-				default:
-					return ErrInternal{err}
-				}
+	for _, stmt := range cmd.Stmts {
+		//fmt.Printf(":: %#v\n", stmt)
+		if err := runner.Run(ctx, stmt); err != nil {
+			switch err.(type) {
+			case ErrInternal, ErrChildExit:
+				return err
+			default:
+				return ErrInternal{err}
 			}
 		}
 	}
