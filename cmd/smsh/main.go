@@ -16,13 +16,13 @@ func main() {
 	if err := Main(ctx, os.Args, os.Stdin, os.Stdout, os.Stderr); err != nil {
 		switch e2 := err.(type) {
 		case ErrChildExit:
-			fmt.Fprintf(os.Stderr, "smsh: %s", err)
+			fmt.Fprintf(os.Stderr, "smsh: %s\n", err)
 			if e2.Signal != 0 {
 				os.Exit(128 + e2.Signal)
 			}
 			os.Exit(e2.Code)
 		case ErrInternal:
-			fmt.Fprintf(os.Stderr, "smsh: %s", err)
+			fmt.Fprintf(os.Stderr, "smsh: %s\n", err)
 			os.Exit(125)
 		default:
 			panic(err)
