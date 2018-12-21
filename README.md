@@ -1,6 +1,8 @@
 a <i>Sm</i>ol <i>sh</i>ell
 ==========================
 
+(Or, "<i>S</i>haking <i>m</i>y <i>s</i>hell <i>h</i>ead".)
+
 `smsh` is a small shell based almost entirely on Bash syntax, built in Go and made for ultraportability and simplicity.
 
 `smsh` is designed to take a list of strings as arguments and treat them as a series of statements.
