@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"mvdan.cc/sh/expand"
 	"mvdan.cc/sh/interp"
 )
 
@@ -72,10 +73,10 @@ var execTool = interp.ModuleExec(func(ctx context.Context, path string, args []s
 	}
 })
 
-func execEnv(env interp.Environ) []string {
+func execEnv(env expand.Environ) []string {
 	list := make([]string, 32)
-	env.Each(func(name string, vr interp.Variable) bool {
-		list = append(list, name+"="+vr.Value.String())
+	env.Each(func(name string, vr expand.Variable) bool {
+		list = append(list, name+"="+vr.String())
 		return true
 	})
 	return list
